@@ -4,7 +4,6 @@ import path from "node:path";
 
 import notifier from "node-notifier";
 import express from "express";
-import expireCache from "expire-cache";
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -34,23 +33,16 @@ const fetch_signature_by_client_ip = async (ip) => {
     .from("signatures")
     .select("*")
     .eq("client_ip", ip)
+    .eq("server_name", process.env.SERVER_NAME)
     .limit(1)
     .single();
-};
-
-const get_count = async () => {
-  if (!expireCache.get("signature-count")) {
-    const count = await fetch_count();
-    expireCache.set("signature-count", count, GUEST_COUNT_CACHE_SEC);
-  }
-  return expireCache.get("signature-count");
 };
 
 const get_ip = (req) => req.headers["x-real-ip"] || req.socket.remoteAddress;
 
 const render = async (req, res) => {
   const ip = get_ip(req).toString();
-  const count = await get_count();
+  const count = await fetch_count();
   const { data, error } = await fetch_signature_by_client_ip(ip);
 
   res.render(path.join(HTML_PATH, "index"), {
