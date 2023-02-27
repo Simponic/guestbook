@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Simponic's Guestbook</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico" />
+  </head>
+  <body>
+    <div class="centered">
+      <div class="title">
+        <h1 class="type">Simponic's Guestbook</h1>
+        <p class="type italic"><%= guest_count %> guest<%if (guest_count > 1 || guest_count == 0) { %>s have<% } else { %> has <% } %> signed the book on the machine "<%= server_name %>"</p>
+      </div>
+
+      <p class="type">
+        - What is this? Who are you? <br />
+        I'm so glad you asked! I'm Lizzy (she/her), a.k.a.
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href="https://github.com/Simponic"
+          >Simponic</a
+        >  and it looks as though you've stumbled upon my guestbook!
+      </p>
+      <p class="type">- Other methods to get in contact:</p>
+      <ul>
+        <li>
+          <a class="type" href="mailto:elizabeth.hunt@simponic.xyz"
+            >elizabeth.hunt@simponic.xyz</a
+          >
+        </li>
+        <li>
+          <a
+            class="type"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://discordapp.com/users/402668035262906380"
+            >Simponic#0083</a
+          >
+        </li>
+        <li>
+          <a
+            class="type"
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://simponic.xyz/contact"
+            >simponic.xyz</a
+          >
+        </li>
+      </ul>
+
+      <div class="signature">
+        <div class="title">
+          <h3 class="type">Sign Here</h3>
+          <p class="type italic">Your IP will be collected :3</p>
+        </div>
+        <div>
+          <%if (client_already_sent) { %>
+            <p><%= client_ip %> has already sent a message</p>
+          <% } else { %>
+          <form method="POST" action="/signature">
+            <label class="type">Name</label>
+            <input name="name" />
+            <br />
+            <label class="type">Message</label>
+            <textarea name="message"></textarea>
+            <br />
+            <input type="submit" />
+          </form>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <script src="js/terminal_type.js"></script>
+  </body>
+</html>
