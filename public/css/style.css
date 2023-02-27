@@ -83,7 +83,7 @@ body {
   margin-top: 1rem;
 }
 
-input[type="submit"] {
+button {
   margin-top: 1rem;
 
   border-radius: 12px;
@@ -92,6 +92,11 @@ input[type="submit"] {
   color: white;
   cursor: pointer;
   padding: 8px;
+}
+
+textarea {
+  border-radius: 8px;
+  border: 2px solid var(--green);
 }
 
 .type {

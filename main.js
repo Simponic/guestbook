@@ -2,6 +2,7 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 
+import notifier from "node-notifier";
 import express from "express";
 import expireCache from "expire-cache";
 import { createClient } from "@supabase/supabase-js";
@@ -9,40 +10,74 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const SOCKET_PATH = "/var/run/guestbookd/guestbookd.sock";
-const GUEST_COUNT_CACHE_MS = 20_000;
+const GUEST_COUNT_CACHE_SEC = 20;
 const HTML_PATH = path.join(process.cwd(), "/html");
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_TOKEN
 );
+
 const app = express();
 
 const fetch_count = async () => {
-  const { data, error } = await supabase
+  const { count, error } = await supabase
     .from("signatures")
-    .eq("server_name", process.env.SERVER_NAME)
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact" })
+    .eq("server_name", process.env.SERVER_NAME);
+
+  return count;
+};
+
+const fetch_signature_by_client_ip = async (ip) => {
+  return await supabase
+    .from("signatures")
+    .select("*")
+    .eq("client_ip", ip)
+    .limit(1)
+    .single();
 };
 
 const get_count = async () => {
-  if (!expireCache.get("guest_count")) {
+  if (!expireCache.get("signature-count")) {
     const count = await fetch_count();
-    expireCache.set("signature-count", count, GUEST_COUNT_CACHE_MS);
+    expireCache.set("signature-count", count, GUEST_COUNT_CACHE_SEC);
   }
   return expireCache.get("signature-count");
 };
 
+const get_ip = (req) => req.headers["x-real-ip"] || req.socket.remoteAddress;
+
+const render = async (req, res) => {
+  const ip = get_ip(req).toString();
+  const count = await get_count();
+  const { data, error } = await fetch_signature_by_client_ip(ip);
+
+  res.render(path.join(HTML_PATH, "index"), {
+    client_ip: ip,
+    client_message: data?.message,
+    guest_count: count,
+    server_name: process.env.SERVER_NAME,
+  });
+};
+
 app.set("view engine", "ejs");
+app.set("trust proxy", true);
+
+app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static("public"));
 
-app.get("/", (req, res) => {
-  res.render(path.join(HTML_PATH, "index"), {
-    client_ip: req.socket.remoteAddress,
-    client_already_sent: false,
-    guest_count: 1,
+app.get("/", async (req, res) => render(req, res));
+
+app.post("/", async (req, res) => {
+  const { data, error } = await supabase.from("signatures").insert({
     server_name: process.env.SERVER_NAME,
+    client_ip: get_ip(req),
+    message: req.body.message,
   });
+
+  render(req, res);
 });
 
 fs.stat(SOCKET_PATH, (err) => {
@@ -53,3 +88,22 @@ fs.stat(SOCKET_PATH, (err) => {
     console.log("Express server listening at " + SOCKET_PATH);
   });
 });
+
+// Notifications
+
+const channel = supabase
+  .channel("table-db-changes")
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "signatures",
+    },
+    (payload) =>
+      notifier.notify({
+        title: `Guest Book - New Message On ${payload.new.server_name}`,
+        message: payload.new.message.replaceAll("\n", ""),
+      })
+  )
+  .subscribe();
