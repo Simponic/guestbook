@@ -94,8 +94,8 @@ const channel = supabase
     },
     (payload) =>
       notifier.notify({
-        title: `Guest Book - New Message On ${payload.new.server_name}`,
-        message: payload.new.message.replaceAll("\n", ""),
+        title: `Guest Book - New Message On ${payload?.new?.server_name}`,
+        message: payload?.new?.message?.replaceAll("\n", ""),
       })
   )
   .subscribe();
