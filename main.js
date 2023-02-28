@@ -8,7 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-const SOCKET_PATH = "/var/run/guestbookd/guestbookd.sock";
+const SOCKET_PATH = process.argv[2] || "/tmp/guestbookd.sock";
 const GUEST_COUNT_CACHE_SEC = 20;
 const HTML_PATH = path.join(process.cwd(), "/html");
 

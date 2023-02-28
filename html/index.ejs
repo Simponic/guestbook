@@ -57,7 +57,7 @@
           <p class="type italic">Your IP will be collected :3</p>
         </div>
         <div>
-          <%if (client_message) { %>
+          <%if (typeof client_message !== 'undefined') { %>
             <p class="type"><%= client_ip %> has already sent a message:</p>
             <p class="type italic"><%= client_message %></p>
           <% } else { %>

@@ -1,13 +1,12 @@
 [Unit]
 Description=guestbookd
-After=network.target
 
 [Service]
 Type=simple
 EnvironmentFile=/home/lizzy/src/guestbook/.env
 WorkingDirectory=/home/lizzy/src/guestbook
-ExecStart=/usr/bin/node /home/lizzy/src/guestbook/main.js
+ExecStart=/usr/bin/node /home/lizzy/src/guestbook/main.js /tmp/guestbookd.sock
 Restart=always
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
